@@ -1,18 +1,22 @@
+const START = 0;
+const DATA = 1;
+const END = 2;
+
 function interval(type, data) {
-  if (type === 0) {
+  if (type === START) {
     const sink = data;
 
     let i = 0;
     const handle = setInterval(() => {
-      sink(1, i++);
+      sink(DATA, i++);
     }, 1000);
     const dispose = () => {
       clearInterval(handle);
     };
     function talkback(t, d) {
-      if (t === 1) {
+      if (t === DATA) {
         i = 0;
-      } else if (t === 2) {
+      } else if (t === END) {
         dispose();
       }
     }
@@ -23,50 +27,50 @@ function interval(type, data) {
 
 function map(transform, source) {
   return function mapSource(type, data) {
-    if (type === 0) {
+    if (type === START) {
       const sink = data;
 
       let sourceTalkback = undefined;
       const mapSink = (t, d) => {
-        if (t === 0) {
+        if (t === START) {
           sourceTalkback = d;
           const mapTalkback = sourceTalkback;
           return sink(0, mapTalkback);
         }
-        if (t === 1) {
+        if (t === DATA) {
           return sink(t, transform(d));
         }
         return sink(t, d);
       };
-      return source(0, mapSink);
+      return source(START, mapSink);
     }
   };
 }
 
 function take(max, source) {
   return function takeSource(type, data) {
-    if (type === 0) {
+    if (type === START) {
       const sink = data;
 
       let taken = 0;
       let sourceTalkback = undefined;
       const takeSink = (t, d) => {
-        if (t === 0) {
+        if (t === START) {
           sourceTalkback = d;
           const takeTalkback = sourceTalkback;
           return sink(0, takeTalkback);
         }
-        if (t === 1 && ++taken === max) {
+        if (t === DATA && ++taken === max) {
           sink(t, d);
-          sink(2);
+          sink(END);
           if (sourceTalkback) {
-            sourceTalkback(2);
+            sourceTalkback(END);
           }
           return;
         }
         return sink(t, d);
       };
-      return source(0, takeSink);
+      return source(START, takeSink);
     }
   };
 }
@@ -74,16 +78,16 @@ function take(max, source) {
 function drain() {
   let handle;
   return function drainSink(type, data) {
-    if (type === 0) {
+    if (type === START) {
       const source = data;
       handle = setTimeout(() => {
-        source(1); // send a message upstream
+        source(DATA); // send a message upstream
       }, 4500);
       return;
-    } else if (type === 1) {
+    } else if (type === DATA) {
       console.log(data);
       return;
-    } else if (type === 2) {
+    } else if (type === END) {
       if (handle) {
         clearTimeout(handle);
       }
@@ -93,7 +97,7 @@ function drain() {
 
 const mapInterval = map(x => x * 10, interval);
 const takeMapInterval = take(6, mapInterval);
-const dispose = takeMapInterval(0, drain());
+const dispose = takeMapInterval(START, drain());
 
 // setTimeout(() => {
 //   dispose();
