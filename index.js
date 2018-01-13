@@ -2,12 +2,13 @@ const START = 0;
 const DATA = 1;
 const END = 2;
 
-function interval(start, sink) {
+function interval(period) {
+  return function intervalSource(start, sink) {
   if (start !== START) return;
     let i = 0;
     const handle = setInterval(() => {
       sink(DATA, i++);
-    }, 1000);
+    }, period);
     const dispose = () => {
       clearInterval(handle);
     };
@@ -20,6 +21,7 @@ function interval(start, sink) {
     }
     sink(START, talkback);
     return dispose;
+  };
   }
 
 function fromArray(arr) {
@@ -106,6 +108,45 @@ function merge(...sources) {
     for (let source of sources) {
       source(START, sink);
     }
+  };
+}
+
+function combine(...sources) {
+  return function combineSource(start, sink) {
+    if (start !== START) return;
+    const EMPTY = {};
+    const n = sources.length;
+    let Nn = n;
+    let Nc = n;
+    const vals = Array(n);
+    if (n === 0) {
+      sink(DATA, []);
+      sink(END);
+      return;
+    }
+    sources.forEach((source, i) => {
+      vals[i] = EMPTY;
+      function combineSink(type, data) {
+        if (type === DATA) {
+          const _Nn = !Nn ? 0 : vals[i] === EMPTY ? --Nn : Nn;
+          vals[i] = data;
+          if (_Nn === 0) {
+            const arr = Array(n);
+            for (let j = 0; j < n; ++j) arr[j] = vals[j];
+            sink(DATA, arr);
+          }
+          return;
+        }
+        if (type === END) {
+          if (--Nc === 0) {
+            sink(END);
+          }
+          return;
+        }
+        sink(type, data);
+      }
+      source(START, combineSink);
+    });
   };
 }
 
