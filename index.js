@@ -85,6 +85,30 @@ function filter(condition, source) {
   };
 }
 
+function accumulate(reducer, seed, source) {
+  return function accumulateSource(type, data) {
+    if (type === START) {
+      const sink = data;
+
+      let state = seed;
+      let sourceTalkback = undefined;
+      const accumulateSink = (t, d) => {
+        if (t === START) {
+          sourceTalkback = d;
+          const accumulateTalkback = sourceTalkback;
+          return sink(START, accumulateTalkback);
+        }
+        if (t === DATA) {
+          state = reducer(state, d);
+          return sink(t, state);
+        }
+        return sink(t, d);
+      };
+      return source(START, accumulateSink);
+    }
+  };
+}
+
 function take(max, source) {
   return function takeSource(type, data) {
     if (type === START) {
