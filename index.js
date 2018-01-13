@@ -35,13 +35,7 @@ function fromArray(arr) {
 function map(transform, source) {
   return function mapSource(start, sink) {
     if (start !== START) return;
-      let sourceTalkback = undefined;
       const mapSink = (t, d) => {
-        if (t === START) {
-          sourceTalkback = d;
-          const mapTalkback = sourceTalkback;
-          return sink(START, mapTalkback);
-        }
         if (t === DATA) {
           return sink(t, transform(d));
         }
@@ -54,13 +48,7 @@ function map(transform, source) {
 function filter(condition, source) {
   return function filterSource(start, sink) {
     if (start !== START) return;
-      let sourceTalkback = undefined;
       const filterSink = (t, d) => {
-        if (t === START) {
-          sourceTalkback = d;
-          const filterTalkback = sourceTalkback;
-          return sink(START, filterTalkback);
-        }
         if (t === DATA) {
           if (condition(d)) {
             return sink(t, d);
@@ -77,13 +65,7 @@ function accumulate(reducer, seed, source) {
   return function accumulateSource(start, sink) {
     if (start !== START) return;
       let state = seed;
-      let sourceTalkback = undefined;
       const accumulateSink = (t, d) => {
-        if (t === START) {
-          sourceTalkback = d;
-          const accumulateTalkback = sourceTalkback;
-          return sink(START, accumulateTalkback);
-        }
         if (t === DATA) {
           state = reducer(state, d);
           return sink(t, state);
@@ -102,8 +84,7 @@ function take(max, source) {
       const takeSink = (t, d) => {
         if (t === START) {
           sourceTalkback = d;
-          const takeTalkback = sourceTalkback;
-          return sink(START, takeTalkback);
+        return sink(t, d);
         }
         if (t === DATA && ++taken === max) {
           sink(t, d);
