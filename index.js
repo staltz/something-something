@@ -25,6 +25,19 @@ function interval(type, data) {
   }
 }
 
+function fromArray(arr) {
+  return function arrayStream(type, data) {
+    if (type === START) {
+      const sink = data;
+
+      for (let x of arr) {
+        sink(DATA, x);
+      }
+      sink(END);
+    }
+  };
+}
+
 function map(transform, source) {
   return function mapSource(type, data) {
     if (type === START) {
