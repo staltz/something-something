@@ -2,10 +2,8 @@ const START = 0;
 const DATA = 1;
 const END = 2;
 
-function interval(type, data) {
-  if (type === START) {
-    const sink = data;
-
+function interval(start, sink) {
+  if (start !== START) return;
     let i = 0;
     const handle = setInterval(() => {
       sink(DATA, i++);
@@ -23,26 +21,20 @@ function interval(type, data) {
     sink(START, talkback);
     return dispose;
   }
-}
 
 function fromArray(arr) {
-  return function arrayStream(type, data) {
-    if (type === START) {
-      const sink = data;
-
+  return function arrayStream(start, sink) {
+    if (start !== START) return;
       for (let x of arr) {
         sink(DATA, x);
       }
       sink(END);
-    }
   };
 }
 
 function map(transform, source) {
-  return function mapSource(type, data) {
-    if (type === START) {
-      const sink = data;
-
+  return function mapSource(start, sink) {
+    if (start !== START) return;
       let sourceTalkback = undefined;
       const mapSink = (t, d) => {
         if (t === START) {
@@ -56,15 +48,12 @@ function map(transform, source) {
         return sink(t, d);
       };
       return source(START, mapSink);
-    }
   };
 }
 
 function filter(condition, source) {
-  return function filterSource(type, data) {
-    if (type === START) {
-      const sink = data;
-
+  return function filterSource(start, sink) {
+    if (start !== START) return;
       let sourceTalkback = undefined;
       const filterSink = (t, d) => {
         if (t === START) {
@@ -81,15 +70,12 @@ function filter(condition, source) {
         return sink(t, d);
       };
       return source(START, filterSink);
-    }
   };
 }
 
 function accumulate(reducer, seed, source) {
-  return function accumulateSource(type, data) {
-    if (type === START) {
-      const sink = data;
-
+  return function accumulateSource(start, sink) {
+    if (start !== START) return;
       let state = seed;
       let sourceTalkback = undefined;
       const accumulateSink = (t, d) => {
@@ -105,15 +91,12 @@ function accumulate(reducer, seed, source) {
         return sink(t, d);
       };
       return source(START, accumulateSink);
-    }
   };
 }
 
 function take(max, source) {
-  return function takeSource(type, data) {
-    if (type === START) {
-      const sink = data;
-
+  return function takeSource(start, sink) {
+    if (start !== START) return;
       let taken = 0;
       let sourceTalkback = undefined;
       const takeSink = (t, d) => {
