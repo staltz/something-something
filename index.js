@@ -60,6 +60,31 @@ function map(transform, source) {
   };
 }
 
+function filter(condition, source) {
+  return function filterSource(type, data) {
+    if (type === START) {
+      const sink = data;
+
+      let sourceTalkback = undefined;
+      const filterSink = (t, d) => {
+        if (t === START) {
+          sourceTalkback = d;
+          const filterTalkback = sourceTalkback;
+          return sink(START, filterTalkback);
+        }
+        if (t === DATA) {
+          if (condition(d)) {
+            return sink(t, d);
+          }
+          return;
+        }
+        return sink(t, d);
+      };
+      return source(START, filterSink);
+    }
+  };
+}
+
 function take(max, source) {
   return function takeSource(type, data) {
     if (type === START) {
@@ -109,8 +134,9 @@ function drain() {
 }
 
 const mapInterval = map(x => x * 10, interval);
-const takeMapInterval = take(6, mapInterval);
-const dispose = takeMapInterval(START, drain());
+const filterMapInterval = filter(x => x > 0, mapInterval);
+const takeFilterMapInterval = take(6, filterMapInterval);
+const dispose = takeFilterMapInterval(START, drain());
 
 // setTimeout(() => {
 //   dispose();
