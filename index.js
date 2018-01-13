@@ -20,7 +20,7 @@ function interval(type, data) {
         dispose();
       }
     }
-    sink(0, talkback);
+    sink(START, talkback);
     return dispose;
   }
 }
@@ -35,7 +35,7 @@ function map(transform, source) {
         if (t === START) {
           sourceTalkback = d;
           const mapTalkback = sourceTalkback;
-          return sink(0, mapTalkback);
+          return sink(START, mapTalkback);
         }
         if (t === DATA) {
           return sink(t, transform(d));
@@ -58,7 +58,7 @@ function take(max, source) {
         if (t === START) {
           sourceTalkback = d;
           const takeTalkback = sourceTalkback;
-          return sink(0, takeTalkback);
+          return sink(START, takeTalkback);
         }
         if (t === DATA && ++taken === max) {
           sink(t, d);
