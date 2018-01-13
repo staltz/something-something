@@ -116,6 +116,14 @@ function take(max, source) {
         return sink(t, d);
       };
       return source(START, takeSink);
+  };
+    }
+
+function merge(...sources) {
+  return function mergeSource(start, sink) {
+    if (start !== START) return;
+    for (let source of sources) {
+      source(START, sink);
     }
   };
 }
@@ -140,10 +148,11 @@ function drain() {
   };
 }
 
-const mapInterval = map(x => x * 10, interval);
-const filterMapInterval = filter(x => x > 0, mapInterval);
-const takeFilterMapInterval = take(6, filterMapInterval);
-const dispose = takeFilterMapInterval(START, drain());
+const a = map(x => x * 10, interval);
+const b = filter(x => x > 0, a);
+const c = take(6, b);
+const d = accumulate((acc, x) => acc + x, 0, c);
+const dispose = d(START, drain());
 
 // setTimeout(() => {
 //   dispose();
