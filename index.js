@@ -119,6 +119,12 @@ function combine(...sources) {
     let Nn = n;
     let Nc = n;
     const vals = Array(n);
+    const talkback = (t, d) => {
+      if (t === END) {
+        sourceTalkbacks.forEach(fn => fn && fn(END));
+      }
+    };
+    const sourceTalkbacks = Array(n);
     if (n === 0) {
       sink(DATA, []);
       sink(END);
@@ -127,6 +133,10 @@ function combine(...sources) {
     sources.forEach((source, i) => {
       vals[i] = EMPTY;
       function combineSink(type, data) {
+        if (type === START) {
+          sourceTalkbacks[i] = data;
+          return sink(START, talkback);
+        }
         if (type === DATA) {
           const _Nn = !Nn ? 0 : vals[i] === EMPTY ? --Nn : Nn;
           vals[i] = data;
