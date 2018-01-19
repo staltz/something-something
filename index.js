@@ -34,6 +34,23 @@ function fromArray(arr) {
   };
 }
 
+function fromIterator(iter) {
+  return function iteratorSource(start, sink) {
+    if (start !== START) return;
+    function talkback(t, d) {
+      if (t === DATA) {
+        const res = iter.next();
+        if (res.done) {
+          sink(END);
+        } else {
+          sink(DATA, res.value);
+        }
+      }
+    }
+    sink(START, talkback);
+  };
+}
+
 function map(transform, source) {
   return function mapSource(start, sink) {
     if (start !== START) return;
@@ -160,7 +177,7 @@ function combine(...sources) {
   };
 }
 
-function drain() {
+function observe() {
   let handle;
   return function drainSink(type, data) {
     if (type === START) {
@@ -180,17 +197,32 @@ function drain() {
   };
 }
 
-// const as = map(x => x, intervalObservable(100));
-const as = intervalObservable(100);
-// const bs = map(x => 'B' + x, filter(x => x > 0, intervalObservable(400)));
-const bs = filter(x => x > 0, intervalObservable(400));
-const cs = map(arr => arr.join(','), combine(as, bs));
-const ds = take(6, cs);
-// const c = take(6, b);
-// const d = accumulate((acc, x) => acc + x, 0, c);
-const dispose = ds(START, drain());
+function suck(operation) {
+  let source;
+  return function suckSink(type, data) {
+    if (type === START) {
+      source = data;
+      source(DATA);
+    } else if (type === DATA) {
+      operation(data);
+      setTimeout(() => {
+        source(DATA);
+      }, 1000);
+    } else if (type === END) {
+      // just don't bother anymore
+    }
+  };
+}
 
-// combine(interval(1000), interval(200))(0, drain());
+// const as = intervalObservable(100);
+// const bs = filter(x => x > 0, intervalObservable(400));
+// const cs = map(arr => arr.join(','), combine(as, bs));
+// const ds = take(6, cs);
+// const dispose = ds(START, observe());
+
+const as = fromIterator([10, 20, 30, 40].entries());
+const bs = map(arr => arr[1] * 0.1, as);
+bs(START, suck(x => console.log(x)));
 
 // setTimeout(() => {
 //   dispose();
